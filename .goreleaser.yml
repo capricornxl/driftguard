@@ -1,0 +1,99 @@
+# DriftGuard Goreleaser Configuration
+# https://goreleaser.com
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    main: ./cmd/main.go
+    binary: driftguard
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.Date={{.Date}}
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+      - config.json
+      - deploy/docker-compose.yml
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+release:
+  github:
+    owner: driftguard
+    name: driftguard
+  draft: true
+  prerelease: auto
+
+brews:
+  - name: driftguard
+    repository:
+      owner: driftguard
+      name: homebrew-driftguard
+    homepage: https://github.com/driftguard/driftguard
+    description: AI Agent Behavior Degradation Monitoring System
+    license: Apache-2.0
+
+dockers:
+  - image_templates:
+      - "driftguard/driftguard:{{ .Tag }}-amd64"
+    use: buildx
+    dockerfile: Dockerfile.release
+    build_flag_templates:
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "driftguard/driftguard:{{ .Tag }}-arm64"
+    use: buildx
+    dockerfile: Dockerfile.release
+    build_flag_templates:
+      - "--platform=linux/arm64"
+
+docker_manifests:
+  - name_template: driftguard/driftguard:{{ .Tag }}
+    image_templates:
+      - driftguard/driftguard:{{ .Tag }}-amd64
+      - driftguard/driftguard:{{ .Tag }}-arm64
+  - name_template: driftguard/driftguard:latest
+    image_templates:
+      - driftguard/driftguard:{{ .Tag }}-amd64
+      - driftguard/driftguard:{{ .Tag }}-arm64

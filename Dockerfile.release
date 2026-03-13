@@ -1,0 +1,36 @@
+# DriftGuard Release Dockerfile
+FROM alpine:3.18
+
+# Install ca-certificates for HTTPS
+RUN apk --no-cache add ca-certificates tzdata
+
+# Create non-root user
+RUN addgroup -g 1000 driftguard && \
+    adduser -D -u 1000 -G driftguard driftguard
+
+# Set working directory
+WORKDIR /app
+
+# Copy binary (will be added by goreleaser)
+COPY driftguard /app/driftguard
+
+# Copy config
+COPY config.json /app/config.json
+
+# Set permissions
+RUN chown -R driftguard:driftguard /app && \
+    chmod +x /app/driftguard
+
+# Switch to non-root user
+USER driftguard
+
+# Expose ports
+EXPOSE 8080 8081
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+
+# Run
+ENTRYPOINT ["/app/driftguard"]
+CMD ["-config", "/app/config.json"]

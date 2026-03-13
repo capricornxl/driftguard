@@ -1,0 +1,118 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+      "type": "stat",
+      "title": "DriftGuard Overview",
+      "targets": [{"expr": "count(driftguard_health_score)", "legendFormat": "Total Agents"}],
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}}}
+    },
+    {
+      "id": 2,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "type": "gauge",
+      "title": "Average Health Score",
+      "targets": [{"expr": "avg(driftguard_health_score)", "legendFormat": "Avg Score"}],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0, "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 50},
+              {"color": "green", "value": 85}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "type": "stat",
+      "title": "Degraded Agents",
+      "targets": [{"expr": "sum(driftguard_degraded_agents)", "legendFormat": "Degraded"}],
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "red", "value": 1}]}}}
+    },
+    {
+      "id": 4,
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12},
+      "type": "timeseries",
+      "title": "Health Score Trend",
+      "targets": [{"expr": "driftguard_health_score", "legendFormat": "{{agent_id}} - {{level}}"}]
+    },
+    {
+      "id": 5,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+      "type": "timeseries",
+      "title": "Health Score Dimensions",
+      "targets": [
+        {"expr": "driftguard_health_score_latency", "legendFormat": "{{agent_id}} - Latency"},
+        {"expr": "driftguard_health_score_efficiency", "legendFormat": "{{agent_id}} - Efficiency"},
+        {"expr": "driftguard_health_score_consistency", "legendFormat": "{{agent_id}} - Consistency"},
+        {"expr": "driftguard_health_score_accuracy", "legendFormat": "{{agent_id}} - Accuracy"},
+        {"expr": "driftguard_health_score_hallucination", "legendFormat": "{{agent_id}} - Hallucination"}
+      ]
+    },
+    {
+      "id": 6,
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+      "type": "timeseries",
+      "title": "Interaction Latency (ms)",
+      "targets": [{"expr": "histogram_quantile(0.95, rate(driftguard_interaction_latency_ms_bucket[5m]))", "legendFormat": "P95 - {{agent_id}}"}]
+    },
+    {
+      "id": 7,
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 28},
+      "type": "timeseries",
+      "title": "Active Alerts",
+      "targets": [{"expr": "driftguard_alerts_active", "legendFormat": "{{agent_id}}"}]
+    },
+    {
+      "id": 8,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 36},
+      "type": "stat",
+      "title": "Alerts by Level",
+      "targets": [
+        {"expr": "driftguard_alerts_by_level{level=\"critical\"}", "legendFormat": "Critical"},
+        {"expr": "driftguard_alerts_by_level{level=\"warning\"}", "legendFormat": "Warning"},
+        {"expr": "driftguard_alerts_by_level{level=\"info\"}", "legendFormat": "Info"}
+      ]
+    },
+    {
+      "id": 9,
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 36},
+      "type": "timeseries",
+      "title": "Detection Trend",
+      "targets": [{"expr": "driftguard_detection_trend", "legendFormat": "{{agent_id}}"}]
+    },
+    {
+      "id": 10,
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 44},
+      "type": "table",
+      "title": "Agent Status",
+      "targets": [{"expr": "driftguard_health_score", "format": "table", "instant": true}]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["driftguard", "ai", "monitoring"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "DriftGuard - AI Agent Health Monitor",
+  "uid": "driftguard-main",
+  "version": 1,
+  "weekStart": ""
+}

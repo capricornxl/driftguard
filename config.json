@@ -1,0 +1,37 @@
+{
+  "server": {
+    "port": "8080",
+    "host": "0.0.0.0"
+  },
+  "database": {
+    "host": "localhost",
+    "port": "5432",
+    "user": "driftguard",
+    "password": "driftguard",
+    "dbname": "driftguard"
+  },
+  "collector": {
+    "agent_endpoint": "http://localhost:8081",
+    "batch_size": 100,
+    "flush_interval": 60
+  },
+  "evaluator": {
+    "weights": {
+      "latency": 0.15,
+      "efficiency": 0.10,
+      "consistency": 0.30,
+      "accuracy": 0.35,
+      "hallucination": 0.10
+    }
+  },
+  "detector": {
+    "check_interval": 300,
+    "window_days": 7,
+    "threshold": 70.0
+  },
+  "alerter": {
+    "enabled": true,
+    "channels": ["log", "database"],
+    "webhook_url": ""
+  }
+}
