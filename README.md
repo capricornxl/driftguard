@@ -472,12 +472,16 @@ Apache License 2.0 - See [LICENSE](LICENSE) for details.
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 开启 Pull Request
 
+详细指南请查看 [CONTRIBUTING.md](CONTRIBUTING.md)
+
 ---
 
 ## 📞 联系方式
 
 - **GitHub**: https://github.com/driftguard/driftguard
 - **Issues**: https://github.com/driftguard/driftguard/issues
+- **Discussions**: https://github.com/driftguard/driftguard/discussions
+- **Security**: [SECURITY.md](SECURITY.md)
 
 ---
 
