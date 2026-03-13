@@ -1,0 +1,21 @@
+# Code owners for DriftGuard
+# https://help.github.com/articles/about-codeowners/
+
+# Default owners
+* @Yadeno
+
+# Module owners
+/internal/collector @Yadeno
+/internal/evaluator @Yadeno
+/internal/detector @Yadeno
+/internal/alerter @Yadeno
+/internal/api @Yadeno
+/pkg/metrics @Yadeno
+
+# Documentation
+/docs/ @Yadeno
+/README.md @Yadeno
+
+# Configuration
+/deploy/ @Yadeno
+/.github/ @Yadeno
