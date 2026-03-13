@@ -31,7 +31,7 @@ func TestDetectThreshold(t *testing.T) {
 		Threshold:     70.0,
 	}
 	
-	det := NewDetector(cfg, db)
+	det := NewDetector(cfg, db, nil)
 	
 	// 测试严重阈值 (<50)
 	scores := []models.HealthScore{
@@ -77,7 +77,7 @@ func TestDetectThreshold(t *testing.T) {
 func TestDetectTrend(t *testing.T) {
 	db := setupTestDB(t)
 	cfg := &config.DetectorConfig{}
-	det := NewDetector(cfg, db)
+	det := NewDetector(cfg, db, nil)
 	
 	// 测试下降趋势
 	scores := []models.HealthScore{
@@ -108,7 +108,7 @@ func TestDetectTrend(t *testing.T) {
 		{Score: 90},
 	}
 	
-	alert2, trend2, slope2 := det.detectTrend(scores2)
+	_, trend2, slope2 := det.detectTrend(scores2)
 	if trend2 != "improving" {
 		t.Errorf("Expected improving trend, got %s", trend2)
 	}
@@ -137,7 +137,7 @@ func TestDetectTrend(t *testing.T) {
 func TestDetectAnomaly(t *testing.T) {
 	db := setupTestDB(t)
 	cfg := &config.DetectorConfig{}
-	det := NewDetector(cfg, db)
+	det := NewDetector(cfg, db, nil)
 	
 	// 测试正常波动 (无异常)
 	scores := []models.HealthScore{
@@ -171,7 +171,7 @@ func TestDetectAnomaly(t *testing.T) {
 func TestDetectSpike(t *testing.T) {
 	db := setupTestDB(t)
 	cfg := &config.DetectorConfig{}
-	det := NewDetector(cfg, db)
+	det := NewDetector(cfg, db, nil)
 	
 	// 测试正常变化
 	scores := []models.HealthScore{
@@ -201,7 +201,7 @@ func TestDetectSpike(t *testing.T) {
 func TestCalculateConfidence(t *testing.T) {
 	db := setupTestDB(t)
 	cfg := &config.DetectorConfig{}
-	det := NewDetector(cfg, db)
+	det := NewDetector(cfg, db, nil)
 	
 	// 测试无告警
 	alerts := []AlertInfo{}
@@ -248,7 +248,7 @@ func TestDetectorFull(t *testing.T) {
 		Threshold:     70.0,
 	}
 	
-	det := NewDetector(cfg, db)
+	det := NewDetector(cfg, db, nil)
 	
 	// 插入测试数据 (持续下降)
 	now := time.Now()
@@ -257,7 +257,7 @@ func TestDetectorFull(t *testing.T) {
 		hs := models.HealthScore{
 			AgentID:   "test-agent",
 			Score:     score,
-			CreatedAt: now.Add(-time.Duration(i) * time.Hour),
+			CreatedAt: now.Add(-time.Duration(9-i) * time.Hour), // 最早的分数在最前面
 		}
 		db.Create(&hs)
 	}

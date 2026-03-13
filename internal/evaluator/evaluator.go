@@ -243,7 +243,7 @@ func (e *Evaluator) evaluateHallucination(interactions []models.Interaction) flo
 
 		// 检测幻觉信号
 		if containsHallucinationPatterns(output) {
-			hallucinationPenalty += 20
+			hallucinationPenalty += 50 // 每个幻觉模式惩罚 50 分
 		}
 	}
 

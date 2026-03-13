@@ -35,7 +35,7 @@ func TestEvaluateLatency(t *testing.T) {
 		},
 	}
 	
-	eval := NewEvaluator(cfg, db)
+	eval := NewEvaluator(cfg, db, nil)
 	
 	// 测试 P95 < 500ms (应得 100 分)
 	interactions := []models.Interaction{
@@ -69,7 +69,7 @@ func TestEvaluateLatency(t *testing.T) {
 func TestEvaluateEfficiency(t *testing.T) {
 	db := setupTestDB(t)
 	cfg := &config.EvaluatorConfig{}
-	eval := NewEvaluator(cfg, db)
+	eval := NewEvaluator(cfg, db, nil)
 	
 	// 测试高效率 (>100 tokens/s)
 	interactions := []models.Interaction{
@@ -97,7 +97,7 @@ func TestEvaluateEfficiency(t *testing.T) {
 func TestEvaluateConsistency(t *testing.T) {
 	db := setupTestDB(t)
 	cfg := &config.EvaluatorConfig{}
-	eval := NewEvaluator(cfg, db)
+	eval := NewEvaluator(cfg, db, nil)
 	
 	// 测试高一致性 (相同长度输出)
 	interactions := []models.Interaction{
@@ -156,7 +156,7 @@ func TestContainsHallucinationPatterns(t *testing.T) {
 func TestEvaluateAccuracy(t *testing.T) {
 	db := setupTestDB(t)
 	cfg := &config.EvaluatorConfig{}
-	eval := NewEvaluator(cfg, db)
+	eval := NewEvaluator(cfg, db, nil)
 	
 	// 测试正常回答 (应得高分)
 	interactions := []models.Interaction{
@@ -184,7 +184,7 @@ func TestEvaluateAccuracy(t *testing.T) {
 func TestEvaluateHallucination(t *testing.T) {
 	db := setupTestDB(t)
 	cfg := &config.EvaluatorConfig{}
-	eval := NewEvaluator(cfg, db)
+	eval := NewEvaluator(cfg, db, nil)
 	
 	// 测试无幻觉 (应得高分)
 	interactions := []models.Interaction{
@@ -221,7 +221,7 @@ func TestHealthResult(t *testing.T) {
 		},
 	}
 	
-	eval := NewEvaluator(cfg, db)
+	eval := NewEvaluator(cfg, db, nil)
 	
 	// 插入测试数据
 	now := time.Now()

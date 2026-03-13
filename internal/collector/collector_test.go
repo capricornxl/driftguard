@@ -30,7 +30,7 @@ func TestCollectorReceive(t *testing.T) {
 		FlushInterval: 60,
 	}
 	
-	collector := NewCollector(cfg, db)
+	collector := NewCollector(cfg, db, nil)
 	
 	// 测试接收单个交互
 	interaction := models.Interaction{
@@ -65,7 +65,7 @@ func TestCollectorFlush(t *testing.T) {
 		FlushInterval: 1, // 1 秒刷新
 	}
 	
-	collector := NewCollector(cfg, db)
+	collector := NewCollector(cfg, db, nil)
 	collector.Start()
 	defer collector.Stop()
 	
@@ -102,7 +102,7 @@ func TestCollectorStats(t *testing.T) {
 		FlushInterval: 60,
 	}
 	
-	collector := NewCollector(cfg, db)
+	collector := NewCollector(cfg, db, nil)
 	
 	// 添加一些数据
 	for i := 0; i < 5; i++ {

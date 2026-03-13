@@ -1,7 +1,6 @@
 package collector
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"

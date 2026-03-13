@@ -14,8 +14,9 @@ import (
 
 // Detector 退化检测器
 type Detector struct {
-	cfg *config.DetectorConfig
-	db  *gorm.DB
+	cfg     *config.DetectorConfig
+	db      *gorm.DB
+	metrics *metrics.Metrics
 }
 
 // DetectionResult 检测结果
@@ -40,10 +41,11 @@ type AlertInfo struct {
 }
 
 // NewDetector 创建检测器
-func NewDetector(cfg *config.DetectorConfig, db *gorm.DB) *Detector {
+func NewDetector(cfg *config.DetectorConfig, db *gorm.DB, m *metrics.Metrics) *Detector {
 	return &Detector{
-		cfg: cfg,
-		db:  db,
+		cfg:     cfg,
+		db:      db,
+		metrics: m,
 	}
 }
 
@@ -221,7 +223,7 @@ func (d *Detector) detectAnomaly(scores []models.HealthScore) *AlertInfo {
 	latest := scores[len(scores)-1]
 	zScore := (latest.Score - mean) / stdDev
 
-	if zScore < -2.0 { // 低于 2 个标准差
+	if zScore < -1.5 { // 低于 1.5 个标准差
 		return &AlertInfo{
 			Type:      "anomaly",
 			Level:     "warning",

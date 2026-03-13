@@ -52,11 +52,11 @@ func main() {
 	}
 
 	// 初始化组件
-	collector := collector.NewCollector(&cfg.Collector, db)
-	evaluator := evaluator.NewEvaluator(&cfg.Evaluator, db)
-	detector := detector.NewDetector(&cfg.Detector, db)
-	alerter := alerter.NewAlerter(&cfg.Alerter, db)
 	metrics := metrics.NewMetrics()
+	collector := collector.NewCollector(&cfg.Collector, db, metrics)
+	evaluator := evaluator.NewEvaluator(&cfg.Evaluator, db, metrics)
+	detector := detector.NewDetector(&cfg.Detector, db, metrics)
+	alerter := alerter.NewAlerter(&cfg.Alerter, db, metrics)
 
 	// 启动采集器
 	collector.Start()
