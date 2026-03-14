@@ -1,51 +1,113 @@
+# ==============
 # Binaries
+# ==============
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
+bin/
 driftguard
-
-# Test binary
+driftguard-*
 *.test
 
-# Output of go coverage
-*.out
+# ==============
+# Test and coverage
+# ==============
+coverage.out
+coverage.html
+coverage.txt
+test-results/
+*.testresult
 
-# Dependency directories
-vendor/
-
-# Go workspace file
-go.work
-
+# ==============
 # IDE
+# ==============
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+*.bak
 
+# ==============
 # OS
+# ==============
 .DS_Store
 Thumbs.db
 
-# Config overrides
-config.local.json
-
+# ==============
 # Logs
+# ==============
 *.log
 logs/
 
+# ==============
+# Config (sensitive)
+# ==============
+config.json
+config.yaml
+config.local.*
+*.local.*
+*.secret.*
+
+# ==============
 # Temporary files
+# ==============
 tmp/
 temp/
+*.tmp
+*.temp
 
+# ==============
+# Internal documentation (sensitive)
+# ==============
+INTERNAL_*.md
+PLAN_*.md
+REFACTOR_*.md
+TODO_INTERNAL.md
+internal-docs/
+docs/internal/
+
+# ==============
+# Scripts (internal tools)
+# ==============
+scripts/internal/
+*.internal.sh
+scripts/test-*.sh
+scripts/dev-*.sh
+scripts/local-*.sh
+
+# ==============
+# Database
+# ==============
+*.db
+*.sqlite
+*.sqlite3
+
+# ==============
+# Environment
+# ==============
+.env
+.env.local
+.env.*.local
+.envrc
+
+# ==============
+# Build artifacts
+# ==============
+dist/
+build/
+out/
+
+# ==============
+# Helm
+# ==============
+*.tgz
+.cr-release-packages/
+
+# ==============
 # Docker
+# ==============
 docker-compose.override.yml
-
-# Coverage
-coverage.txt
-coverage.html
-
-# Profiling
-pprof/
+.docker/

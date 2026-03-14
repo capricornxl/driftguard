@@ -1,0 +1,102 @@
+version: '3.8'
+
+# DriftGuard 简化单机部署版本
+# 用于快速验收测试
+# 启动：docker-compose -f docker-compose.simple.yml up -d
+# 查看日志：docker-compose -f docker-compose.simple.yml logs -f
+# 停止：docker-compose -f docker-compose.simple.yml down
+
+services:
+  # PostgreSQL 数据库
+  db:
+    image: postgres:15-alpine
+    container_name: driftguard-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: driftguard
+      POSTGRES_PASSWORD: driftguard123
+      POSTGRES_DB: driftguard
+    volumes:
+      - driftguard-db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - driftguard-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U driftguard -d driftguard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # DriftGuard 主应用
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: driftguard-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # 服务器配置
+      PORT: 8080
+      HOST: 0.0.0.0
+      
+      # 数据库配置
+      DB_DRIVER: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: driftguard
+      DB_USERNAME: driftguard
+      DB_PASSWORD: driftguard123
+      DB_MAX_OPEN_CONNS: 25
+      DB_MAX_IDLE_CONNS: 5
+      
+      # 收集器配置
+      COLLECTOR_BATCH_SIZE: 100
+      COLLECTOR_FLUSH_INTERVAL: 60s
+      
+      # 检测器配置
+      DETECTOR_CHECK_INTERVAL: 300
+      DETECTOR_WINDOW_DAYS: 7
+      DETECTOR_THRESHOLD: 70.0
+      DETECTOR_KS_THRESHOLD: 0.05
+      DETECTOR_PSI_THRESHOLD: 0.2
+      
+      # 健康权重
+      WEIGHT_LATENCY: 0.15
+      WEIGHT_EFFICIENCY: 0.10
+      WEIGHT_CONSISTENCY: 0.30
+      WEIGHT_ACCURACY: 0.35
+      WEIGHT_HALLUCINATION: 0.10
+      
+      # 日志配置
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+      
+      # 环境配置
+      ENVIRONMENT: development
+      DEBUG: "false"
+    ports:
+      - "8080:8080"
+    networks:
+      - driftguard-network
+    volumes:
+      - driftguard-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/v1/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  driftguard-network:
+    driver: bridge
+
+volumes:
+  driftguard-db-data:
+    driver: local
+  driftguard-data:
+    driver: local

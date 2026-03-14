@@ -60,7 +60,7 @@ func NewAlerter(cfg *config.AlerterConfig, logger *logrus.Logger) *Alerter {
 	return a
 }
 
-// SendAlert sends an alert through all configured channels
+// SendAlert sends an alert through all configured channels with retry mechanism
 func (a *Alerter) SendAlert(alert *models.Alert) error {
 	a.logger.WithFields(logrus.Fields{
 		"alert_id":   alert.ID,
@@ -72,11 +72,11 @@ func (a *Alerter) SendAlert(alert *models.Alert) error {
 
 	errors := []error{}
 	for _, channel := range a.channels {
-		if err := channel.Send(alert); err != nil {
+		if err := a.sendWithRetry(channel, alert); err != nil {
 			a.logger.WithFields(logrus.Fields{
 				"channel": channel.Name(),
 				"error":   err,
-			}).Error("Failed to send alert")
+			}).Error("Failed to send alert after retries")
 			errors = append(errors, err)
 		}
 	}
@@ -86,6 +86,42 @@ func (a *Alerter) SendAlert(alert *models.Alert) error {
 	}
 
 	return nil
+}
+
+// sendWithRetry sends an alert with exponential backoff retry
+func (a *Alerter) sendWithRetry(channel AlertChannel, alert *models.Alert) error {
+	maxRetries := 3
+	baseDelay := time.Second
+
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		err := channel.Send(alert)
+		if err == nil {
+			if attempt > 0 {
+				a.logger.WithFields(logrus.Fields{
+					"channel": channel.Name(),
+					"attempt": attempt + 1,
+				}).Info("Alert sent successfully after retry")
+			}
+			return nil
+		}
+
+		lastErr = err
+
+		if attempt < maxRetries-1 {
+			// Exponential backoff: 1s, 2s, 4s
+			delay := baseDelay * time.Duration(1<<uint(attempt))
+			a.logger.WithFields(logrus.Fields{
+				"channel": channel.Name(),
+				"attempt": attempt + 1,
+				"delay":   delay,
+				"error":   err,
+			}).Warn("Alert send failed, retrying with exponential backoff")
+			time.Sleep(delay)
+		}
+	}
+
+	return fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
 }
 
 // ============ Log Channel ============
