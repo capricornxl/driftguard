@@ -1,75 +1,95 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: driftguard-db
-    environment:
-      POSTGRES_DB: driftguard
-      POSTGRES_USER: driftguard
-      POSTGRES_PASSWORD: driftguard
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U driftguard"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   driftguard:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: driftguard-api
+    container_name: driftguard
     ports:
       - "8080:8080"
-      - "8081:8081"
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USER=driftguard
-      - DB_PASSWORD=driftguard
       - DB_NAME=driftguard
+      - DB_USER=driftguard
+      - DB_PASSWORD=driftguard123
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - driftguard-data:/var/lib/driftguard
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - driftguard-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: driftguard-db
+    environment:
+      - POSTGRES_DB=driftguard
+      - POSTGRES_USER=driftguard
+      - POSTGRES_PASSWORD=driftguard123
     volumes:
-      - ./config.json:/app/config.json
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U driftguard -d driftguard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - driftguard-network
 
   prometheus:
-    image: prom/prometheus:v2.47.0
+    image: prom/prometheus:latest
     container_name: driftguard-prometheus
-    ports:
-      - "9090:9090"
     volumes:
-      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - promdata:/prometheus
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
     depends_on:
       - driftguard
+    restart: unless-stopped
+    networks:
+      - driftguard-network
 
   grafana:
-    image: grafana/grafana:10.1.0
+    image: grafana/grafana:latest
     container_name: driftguard-grafana
-    ports:
-      - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=driftguard
-      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel
     volumes:
-      - grafanadata:/var/lib/grafana
-      - ./deploy/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
-      - ./deploy/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-      - ./deploy/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - grafana-data:/var/lib/grafana
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
     depends_on:
       - prometheus
+    restart: unless-stopped
+    networks:
+      - driftguard-network
 
 volumes:
-  pgdata:
-  promdata:
-  grafanadata:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+  driftguard-data:
+
+networks:
+  driftguard-network:
+    driver: bridge

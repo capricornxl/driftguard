@@ -1,30 +1,48 @@
-FROM golang:1.21-alpine AS builder
+# Build stage
+FROM golang:1.18-alpine AS builder
 
 WORKDIR /app
 
-# 安装依赖
+# Install dependencies
 RUN apk add --no-cache git
 
-# 复制 go.mod 和 go.sum
+# Copy go mod files
 COPY go.mod go.sum ./
 RUN go mod download
 
-# 复制源代码
+# Copy source code
 COPY . .
 
-# 编译
+# Build
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o driftguard ./cmd/main.go
 
-# 最终镜像
+# Final stage
 FROM alpine:latest
-
-RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
 
+# Install ca-certificates for HTTPS
+RUN apk --no-cache add ca-certificates tzdata
+
+# Create non-root user
+RUN addgroup -g 1000 driftguard && \
+    adduser -D -u 1000 -G driftguard driftguard
+
+# Copy binary from builder
 COPY --from=builder /app/driftguard .
-COPY config.json .
+COPY --from=builder /app/config.example.yaml ./config.yaml
 
-EXPOSE 8080 8081
+# Set ownership
+RUN chown -R driftguard:driftguard /app
 
-CMD ["./driftguard", "-config", "config.json"]
+USER driftguard
+
+# Expose API port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["./driftguard"]
+CMD ["--config", "./config.yaml"]

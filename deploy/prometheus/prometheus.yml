@@ -6,7 +6,8 @@ scrape_configs:
   - job_name: 'driftguard'
     static_configs:
       - targets: ['driftguard:8080']
-    metrics_path: '/metrics'
+    metrics_path: /metrics
+    scrape_interval: 10s
 
   - job_name: 'prometheus'
     static_configs:

@@ -1,116 +1,151 @@
-# DriftGuard Makefile
-# Common development and deployment tasks
+.PHONY: all build test clean docker docker-up docker-down lint coverage help
 
-.PHONY: help build test run docker-clean release
+# Go parameters
+GOCMD=go
+GOBUILD=$(GOCMD) build
+GOCLEAN=$(GOCMD) clean
+GOTEST=$(GOCMD) test
+GOGET=$(GOCMD) get
+GOMOD=$(GOCMD) mod
 
-# Default target
-help:
-	@echo "DriftGuard - AI Agent Behavior Degradation Monitoring System"
-	@echo ""
-	@echo "Usage:"
-	@echo "  make build        - Build the binary"
-	@echo "  make test         - Run all tests"
-	@echo "  make test-unit    - Run unit tests"
-	@echo "  make test-integration - Run integration tests"
-	@echo "  make run          - Run locally"
-	@echo "  make docker-up    - Start Docker environment"
-	@echo "  make docker-down  - Stop Docker environment"
-	@echo "  make docker-clean - Clean Docker containers"
-	@echo "  make release      - Build release binaries"
-	@echo "  make lint         - Run linters"
-	@echo "  make fmt          - Format code"
-	@echo "  make coverage     - Generate coverage report"
-	@echo ""
+# Binary names
+BINARY_NAME=driftguard
+BINARY_UNIX=$(BINARY_NAME)_unix
 
-# Build
-build:
-	@echo "Building driftguard..."
-	go build -o driftguard ./cmd/main.go
-	@echo "✅ Build complete: ./driftguard"
+# Main package
+MAIN_PACKAGE=./cmd/main.go
 
-# Test
-test: test-unit test-integration
-
-test-unit:
-	@echo "Running unit tests..."
-	go test ./internal/... ./pkg/... -v -race
-
-test-integration:
-	@echo "Running integration tests..."
-	./tests/integration-test.sh
-
-# Run locally
-run:
-	@echo "Starting driftguard..."
-	go run cmd/main.go -config config.json
+# Build flags
+VERSION?=0.1.0
+BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
+GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.GitCommit=$(GIT_COMMIT)"
 
 # Docker
-docker-up:
-	@echo "Starting Docker environment..."
-	docker compose up -d
-	@echo "✅ Services started:"
-	@echo "   - DriftGuard API: http://localhost:8080"
-	@echo "   - Sidecar: http://localhost:8081"
-	@echo "   - Prometheus: http://localhost:9090"
-	@echo "   - Grafana: http://localhost:3000 (admin/driftguard)"
+DOCKER_IMAGE=driftguard
+DOCKER_TAG?=$(VERSION)
 
-docker-down:
-	@echo "Stopping Docker environment..."
-	docker compose down
+all: clean deps lint test build
 
-docker-clean:
-	@echo "Cleaning Docker containers..."
-	docker compose down -v
-	docker system prune -f
+## build: Build the binary
+build:
+	@echo "Building $(BINARY_NAME)..."
+	$(GOBUILD) $(LDFLAGS) -o bin/$(BINARY_NAME) $(MAIN_PACKAGE)
+	@echo "Build complete: bin/$(BINARY_NAME)"
 
-docker-logs:
-	docker compose logs -f $(service)
+## build-linux: Build for Linux
+build-linux:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o bin/$(BINARY_UNIX) $(MAIN_PACKAGE)
 
-docker-restart:
-	docker compose restart
+## test: Run all tests
+test:
+	@echo "Running tests..."
+	$(GOTEST) -v -race ./...
 
-# Release
-release:
-	@echo "Building release..."
-	goreleaser release --snapshot --rm-dist
-	@echo "✅ Release build complete in ./dist/"
+## test-coverage: Run tests with coverage
+test-coverage:
+	@echo "Running tests with coverage..."
+	$(GOTEST) -v -race -coverprofile=coverage.out -covermode=atomic ./...
+	$(GOCMD) tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
 
-# Lint
+## benchmark: Run benchmark tests
+benchmark:
+	@echo "Running benchmarks..."
+	$(GOTEST) -bench=. -benchmem -run=^a ./...
+
+## lint: Run linter
 lint:
-	@echo "Running linters..."
-	go vet ./...
-	golangci-lint run
+	@echo "Running linter..."
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run ./...; \
+	else \
+		echo "golangci-lint not installed. Install with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
+		$(GOTEST) -v ./...; \
+	fi
 
-# Format
-fmt:
-	@echo "Formatting code..."
-	go fmt ./...
+## deps: Download dependencies
+deps:
+	@echo "Downloading dependencies..."
+	$(GOMOD) download
+	$(GOMOD) verify
 
-# Coverage
-coverage:
-	@echo "Generating coverage report..."
-	go test ./... -coverprofile=coverage.txt -covermode=atomic
-	go tool cover -html=coverage.txt -o coverage.html
-	@echo "✅ Coverage report: coverage.html"
-	@echo "Open with: open coverage.html"
+## tidy: Tidy modules
+tidy:
+	@echo "Tidying modules..."
+	$(GOMOD) tidy
 
-# Clean
+## clean: Clean build artifacts
 clean:
 	@echo "Cleaning..."
-	rm -f driftguard
-	rm -f coverage.txt coverage.html
-	rm -rf dist/
-	@echo "✅ Clean complete"
+	$(GOCLEAN)
+	rm -rf bin/
+	rm -f coverage.out coverage.html
 
-# Dev - watch and rebuild
-dev:
-	@echo "Starting development mode..."
-	air -c .air.toml
+## docker: Build Docker image
+docker:
+	@echo "Building Docker image..."
+	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) -t $(DOCKER_IMAGE):latest .
 
-# Init - setup development environment
-init:
-	@echo "Setting up development environment..."
-	go mod download
-	docker compose pull
-	@echo "✅ Setup complete"
-	@echo "Run 'make docker-up' to start services"
+## docker-up: Start Docker Compose stack
+docker-up:
+	@echo "Starting Docker Compose stack..."
+	docker-compose up -d
+	@echo "Stack started. Access:"
+	@echo "  - API: http://localhost:8080"
+	@echo "  - Prometheus: http://localhost:9090"
+	@echo "  - Grafana: http://localhost:3000 (admin/admin123)"
+
+## docker-down: Stop Docker Compose stack
+docker-down:
+	@echo "Stopping Docker Compose stack..."
+	docker-compose down
+
+## docker-logs: View Docker Compose logs
+docker-logs:
+	docker-compose logs -f
+
+## run: Run the application locally
+run:
+	@echo "Running application..."
+	$(GOCMD) run $(MAIN_PACKAGE)
+
+## install: Install the binary
+install:
+	@echo "Installing..."
+	$(GOCMD) install $(LDFLAGS) $(MAIN_PACKAGE)
+
+## fmt: Format code
+fmt:
+	@echo "Formatting code..."
+	$(GOCMD) fmt ./...
+
+## vet: Run go vet
+vet:
+	@echo "Running go vet..."
+	$(GOCMD) vet ./...
+
+## security: Run security scanner
+security:
+	@echo "Running security scanner..."
+	@if command -v govulncheck >/dev/null 2>&1; then \
+		govulncheck ./...; \
+	else \
+		echo "govulncheck not installed. Install with: go install golang.org/x/vuln/cmd/govulncheck@latest"; \
+	fi
+
+## generate: Run go generate
+generate:
+	@echo "Running go generate..."
+	$(GOCMD) generate ./...
+
+## help: Show this help
+help:
+	@echo "DriftGuard - AI Agent Drift Detection System"
+	@echo ""
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@sed -n 's/^## //p' $(MAKEFILE_LIST) | column -t -s ':'
+
+.DEFAULT_GOAL := help
