@@ -1,82 +1,67 @@
-# Security Policy
+# Security Policy - DriftGuard
 
-## 支持版本
+## Supported Versions
 
-| 版本 | 支持状态 |
-|------|----------|
-| v0.1.x | 🟢 支持中 |
+We release patches for security vulnerabilities. Which versions are eligible for receiving such patches depends on the CVSS v3.0 Rating:
 
-## 报告漏洞
+| Version | Supported          |
+| ------- | ------------------ |
+| 0.1.x   | :white_check_mark: |
+| < 0.1   | :x:                |
 
-我们非常重视 DriftGuard 的安全性。如果您发现任何安全漏洞，请负责任地披露。
+## Reporting a Vulnerability
 
-### 如何报告
+We take the security of DriftGuard seriously. If you believe you have found a security vulnerability, please report it to us as described below.
 
-**请不要**直接创建公开 Issue 报告安全问题。
+**Please do NOT report security vulnerabilities through public GitHub issues.**
 
-请通过以下方式之一报告:
+Instead, please report them via email to [support@driftguard.dev](mailto:support@driftguard.dev) or create a draft security advisory on GitHub.
 
-1. **GitHub Private Vulnerability Reporting** (推荐)
-   - 访问：https://github.com/driftguard/driftguard/security/advisories
-   - 点击 "Report a vulnerability"
-   - 填写详细信息
+### Preferred Languages
 
-2. **邮件联系**
-   - 发送邮件到：security@driftguard.dev (待配置)
+We prefer all communications to be in English.
 
-### 报告内容
+### Response Timeline
 
-请尽可能提供详细信息:
+- **48 hours**: Initial acknowledgment of your report
+- **7 days**: Preliminary assessment and timeline for fix
+- **30 days**: Target for patch release (for critical issues)
 
-- 漏洞类型和描述
-- 复现步骤
-- 影响范围
-- 建议的修复方案 (如有)
+### What to Include
 
-### 响应时间
+Please include the following information in your report:
 
-- **确认收到**: 48 小时内
-- **状态更新**: 每周
-- **修复目标**: 根据严重程度
-  - Critical: 7 天
-  - High: 14 天
-  - Medium: 30 天
-  - Low: 60 天
+- Description of the vulnerability
+- Steps to reproduce the issue
+- Potential impact
+- Suggested fix (if any)
+- Your contact information for follow-up
 
-## 安全最佳实践
+## Security Best Practices
 
-### 部署建议
+When deploying DriftGuard in production:
 
-1. **使用最新稳定版本**
-   - 定期更新到最新版本
-   - 订阅 Release 通知
+1. **Use Secrets Management**: Never commit database passwords or API keys to version control
+2. **Enable TLS**: Always use HTTPS in production
+3. **Restrict Access**: Use network policies to limit access to the API
+4. **Regular Updates**: Keep DriftGuard and dependencies up to date
+5. **Monitor Logs**: Enable logging and monitor for suspicious activity
+6. **Least Privilege**: Run with minimal required permissions
 
-2. **配置认证**
-   - 修改默认密码 (Grafana: admin/driftguard)
-   - 使用强密码策略
-   - 启用双因素认证 (如支持)
+## Security Features
 
-3. **网络安全**
-   - 仅暴露必要端口
-   - 使用防火墙限制访问
-   - 生产环境使用 HTTPS
+DriftGuard includes the following security features:
 
-4. **数据保护**
-   - 定期备份数据库
-   - 加密敏感配置
-   - 使用环境变量存储密钥
+- ✅ Non-root container user
+- ✅ Read-only root filesystem
+- ✅ No privilege escalation
+- ✅ Database credentials in Kubernetes Secrets
+- ✅ Input validation on all API endpoints
+- ✅ Rate limiting on sensitive endpoints
+- ✅ Audit logging for security events
 
-5. **监控日志**
-   - 启用审计日志
-   - 定期检查异常访问
-   - 配置告警通知
+## Acknowledgments
 
-## 已知限制
+We thank the following for their responsible disclosure of security issues:
 
-- v0.1.x: 初始版本，功能有限
-- 不支持多租户隔离
-- Webhook 通知未加密
-
-## 致谢
-
-感谢为 DriftGuard 安全做出贡献的所有人!
+- (To be updated as disclosures are received)
